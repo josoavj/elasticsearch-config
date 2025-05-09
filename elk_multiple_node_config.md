@@ -1,9 +1,9 @@
 # CONFIGURATION  MULTISERVEUR POUR elasticsearch - Kibana et Filebeat (Beats)
 
 <p>
-  <img align="center" height=100 src="https://github.com/josoavj/ELK_Config/blob/master/assets/elastic-logo.png" alt="elastic"/>
-  <img align="center" height=150 src="https://github.com/josoavj/ELK_Config/blob/master/assets/elastic-elasticsearch-logo.png" alt="elasticsearch"/>
-  <img align="center" height=150 src="https://github.com/josoavj/ELK_Config/blob/master/assets/elastic-kibana-logo.png" alt="Kibana"/>
+  <img align="center" height=80 src="https://github.com/josoavj/ELK_Config/blob/master/assets/elastic-logo.png" alt="elastic"/>
+  <img align="center" height=100 src="https://github.com/josoavj/ELK_Config/blob/master/assets/elastic-elasticsearch-logo.png" alt="elasticsearch"/>
+  <img align="center" height=100 src="https://github.com/josoavj/ELK_Config/blob/master/assets/elastic-kibana-logo.png" alt="Kibana"/>
 </p>
 
 
@@ -28,7 +28,8 @@
 - Deux Serveurs dediés: Ubuntu Server
   - Le premier pour elasticsearch et Kibana
   - Le second pour Filebeat
-- SSH pour faciliter l'accès distant aux deux serveurs
+- SSH pour faciliter l'accès distant aux deux serveurs.
+  - SSH utiliser le **port 22** et le protocole **TCP**.
 
 
 ### Remarque: 
@@ -50,7 +51,8 @@
 ### Utilisation de l'archive (.tar) comme moyen d'installation
 
 - Installer suivant votre configuration 
-- if (installation == linux){
+```
+if (installation == linux){
   
   lier_au_path(ELK_PATH);
 
@@ -59,7 +61,7 @@
   go_to(configuration);
   
   }
-
+```
 - Lier au path: 
   - Créer un fichier `.extension_nom_terminal`: `.extension_bash` or `.extension.fish`
   - nano `.extension_nom_terminal`
@@ -83,12 +85,50 @@
      - `sudo systemctl enable elasticsearch.service` 
      - `sudo systemctl start elasticsearch.service`
 
-- elasticsearch fonctionnera sans mot de passe utilisateur, vous devez en ajouter
-- Run:  `elasticsearch-reset-password -i -u elastic`
-     - **-i:** interactive
-     - **-u:** Username 
-- Ou procéder par: `elasticsearch-setup-password interactive`
+### Compte elasticsearch
+
+- Il existe plusieurs comptes par défaut dans elasticsearch, tel que **elastic**. Chaque compte possède leurs propres rôles.
+- Chaque rôle définira le privilège des utilisateurs. Pour **elastic**, il a le rôle du superutilisateur (**Superuser**)
+- elasticsearch fonctionnera sans mot de passe utilisateur. Mais pour la sécurité de votre serveur, vous devez créer votre propre mot de passe.
+- Pour ajouter ou changer/réinitialiser le mot de passe d'un compte, lancez la commande:  `elasticsearch-reset-password -i -u username`
+     - **-i:** interactive (Pour une session interactive)
+     - **-u:** votre nom d'utilisateur
+     - On va vous demander de créer puis de confirmer le nouveau mot de passe. 
+- Ou procéder par: `elasticsearch-setup-password interactive` (Mais pour cette commande, on vas vous demander de créer des mots de passe pour tous les services d'elasticsearch)
   [Au cas ou la sécurité par défaut est defaillant ou n'est pas activée]
+- Vous pouvez aussi ajouter de nouveau utilisateur ayant des rôles spécifiques pour votre serveur elasticsearch.
+- Utilisez la commande suivante pour cela: `elasticsearch-users useradd nouveau_utilisateur -r superuser`
+  - elasticsearch va vous demander d'entrer un mot de passe pour le compte par la suite.
+  - **-r ou --rôles** permet de définir un rôle pour l'utilisateur.
+    
+#### Les rôles prédefinis ou Built-in Roles dans elasticsearch
+
+| Rôle Prédéfini                  | Description                                                                                                |
+| :------------------------------ | :--------------------------------------------------------------------------------------------------------- |
+| `superuser`                     | Accès complet à toutes les opérations du cluster et des index. **À utiliser avec grande prudence.** |
+| `kibana_user`                   | Accès général aux fonctionnalités de Kibana pour visualiser et interagir avec les données.                 |
+| `kibana_dashboard_only_user`    | Accès en lecture seule aux tableaux de bord Kibana.                                                      |
+| `monitoring_user`               | Accès aux données de monitoring du cluster (métriques, logs, etc.).                                      |
+| `apm_user`                      | Rôle pour les utilisateurs d'Elastic APM (Application Performance Monitoring).                             |
+| `apm_system`                    | Rôle système pour les opérations internes d'Elastic APM.                                                  |
+| `beats_admin`                   | Rôle pour l'administration des configurations des Beats.                                                  |
+| `beats_system`                  | Rôle système pour les opérations internes des Beats.                                                     |
+| `logstash_admin`                | Rôle pour l'administration des configurations de Logstash.                                                |
+| `logstash_system`               | Rôle système pour les opérations internes de Logstash.                                                    |
+| `machine_learning_admin`        | Rôle pour l'administration des fonctionnalités de Machine Learning.                                         |
+| `machine_learning_user`         | Rôle pour l'utilisation des fonctionnalités de Machine Learning.                                          |
+| `data_admin`                    | Permet d'effectuer des opérations d'administration sur les données (création/suppression d'index, etc.). |
+| `data_reader`                   | Permet de lire les données des index.                                                                     |
+| `ingest_admin`                  | Rôle pour la gestion des pipelines d'ingestion.                                                            |
+| `ingest_user`                   | Rôle pour l'utilisation des pipelines d'ingestion.                                                            |
+| `snapshot_admin`                | Rôle pour la gestion des snapshots d'index.                                                                 |
+| `snapshot_user`                 | Rôle pour l'utilisation des snapshots d'index.                                                                 |
+| `remote_monitoring_agent`       | Rôle pour les agents de monitoring de clusters distants.                                                 |
+| `remote_monitoring_collector`   | Rôle pour le collecteur de données de monitoring de clusters distants.                                     |
+
+- Pour voir les comptes présents dans votre serveur, executez: `elasticsearch-users list`
+  
+### Confirmation et vérification
 
 - Ensuite: sudo systemctl status elasticsearch [Vérifier si elasticsearch est fonctionnel]
 - Après: curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic https://localhost:9200
@@ -148,17 +188,19 @@
   - Run: `sudo systemctl start kibana`
  
 - Pour configurer Kibana selon vos besoins: 
-  - goTo: `/etc/kibana/kibana.yml`
-  - Do: `cp kibana.yml kibana.yml.backup` for the backup file
+  - Allez vers: `/etc/kibana/`
+  - Exécutez : `cp kibana.yml kibana.yml.backup`. Cela va vous permettre de ne pas perdre l'ancienne version du fichier.
   - Then `nano kibana.yml`
-- On the **kibana.yml**: 
-  - `server.port: 5601` (Le port à utiliser pour Kibana)
-  - `server.host: "kibana_IP"`
-  - `elasticsearch.hosts: ["https://localhost:9200"]`
-  - `elasticsearch.username: "kibana_system"`
-  - `elasticsearch.password: "ur_passwd"`
-  - `elasticsearh.ssl.certificateAuthorities: ["/etc/kibana/certs/http_ca.crt"]` (A copier venant de /etc/elasticsearch/certs)
-  - `server.publicBaseUrl: "http://kibana_ip:5601"` {Pour une utilisation standard}
+- Dans le fichier de configuration **kibana.yml**: 
+  ```
+  server.port: 5601                                                                 # Le port à utiliser pour Kibana
+  server.host: "kibana_IP"
+  elasticsearch.hosts: ["https://localhost:9200"]
+  elasticsearch.username: "kibana_system"
+  elasticsearch.password: "ur_passwd"
+  elasticsearch.ssl.certificateAuthorities: ["/etc/kibana/certs/http_ca.crt"]        # A copier venant de /etc/elasticsearch/certs
+  server.publicBaseUrl: "http://kibana_ip:5601"                                     # Pour une utilisation standard
+  ```
 
 ### Tips: Copie vers un autre serveur ssh (Via Secure Copy)
 
@@ -174,10 +216,12 @@
 - Le noeud Maître est celui qui lance le cluster.
 - Veuillez suivre les mêmes instructions que le premier noeud pour les autres sauf pour certaines configurations.
 - Configuration dans **../../elasticsearch.yml** de votre elk:
-   - `cluster.name: same_as_master`
-   -  `node.name: node-x`
-   -  `host: your_host`
-   -  `port: your_port`
+   ```
+   cluster.name: same_as_master
+   node.name: node-x
+   host: votre_hôte
+   port: votre_port
+   ```
 - Dans le noeud Maître: `elasticsearch-create-enrollment-token -s node`
 - Copier le token elasticsearch generé
 - Executer la commande suivant dans le nouveau serveur node elasticsearch:
@@ -197,23 +241,24 @@
 - Ensuite lancez: `elasticsearch-certutil cert --ca elastic-stack-ca.p12` [Pour génerer un clé et un certificat privé pour votre node (Single node)]
 - Cela vous donnera un  fichier: **elastic-certificates.p12**
 - Ajouter les configurations suivantes dans **elasticsearch.yml**:
-  - `xpack.security.transport.ssl.enabled: true`
-  - `xpack.security.transport.ssl.client_authentication: required`
-  - `xpack.security.transport.ssl.verification_mode: certificate`
-  - `xpack.security.transport.ssl.keystore.path: /path/to/certs/elastic-certificates.p12`
-  - `xpack.security.transport.ssl.truststore.path: /path/to/certs/elastic-certificates.p12`
-
-- Run:  `sudo chown root elastic-certificates.p12`
-- Run: `sudo chmod 660 elastic-certificates.p12` {Pour autoriser la lecture et écriture dans le fichier}
+  ```
+  xpack.security.transport.ssl.enabled: true
+  xpack.security.transport.ssl.client_authentication: required
+  xpack.security.transport.ssl.verification_mode: certificate
+  xpack.security.transport.ssl.keystore.path: /path/to/certs/elastic-certificates.p12
+  xpack.security.transport.ssl.truststore.path: /path/to/certs/elastic-certificates.p12
+  ```
+- Lance:  `sudo chown root elastic-certificates.p12`
+- Ensuite lance: `sudo chmod 660 elastic-certificates.p12` {Pour autoriser la lecture et écriture dans le fichier}
   - **6:** Lecture et écriture pour l'utilisateur actuel
   - **6:** Lecture et écriture pour le groupe contenant l'utilisateur
   - **0:** Aucune permission accordée aux autres utilisateurs
-- Then run:
+- Lance par la suite :
   - `elasticsearch-keystore add xpack.security.transport.ssl.keystore.secure_password`
   - `elasticsearch-keystore add xpack.security.transport.ssl.truststore.secure_password`
   - Cela ajoutera les mot de passe du transport ssl dans le Keystore elasticsearch
   
-- Remarque: copier le fichier **elastic-certificates.p12** et suivre les mêmes instructions dans chaque node de votre cluster elasticsearch.
+- **Remarque:** copiez le fichier **elastic-certificates.p12** et suivre les mêmes instructions dans chaque node de votre cluster elasticsearch.
 - Ensuite: `keytool -importcert -trustcacerts -noprompt -keystore elastic-stack-ca.p12 \ -storepass <password>  -alias new-ca -file ca.crt`
 - Vérifier la liste de certificat avec: `keytool -keystore config/elastic-stack-ca.p12 -list`
 
@@ -263,9 +308,11 @@
 - Copier le fichier généré **kibana-server.crt** vers **/etc/kibana/certs**
 - De même pour kibana-server.key
 - Lier ces fichiers dans **kibana.yml**:
-  - `server.ssl.enabled: true`
-  - `server.ssl.certificate: /etc/kibana/certs/kibana-server.crt`
-  - `server.ssl.key: /etc/kibana/certs/kibana-server.key`
+  ```
+  server.ssl.enabled: true
+  server.ssl.certificate: /etc/kibana/certs/kibana-server.crt
+  server.ssl.key: /etc/kibana/certs/kibana-server.key
+  ```
 - Cela changera le protocole de votre serveur kibana en https
 
 
@@ -332,10 +379,11 @@
 - Utiliser linux tar pour ceci
 - Copier la commande donnée
 - Dans terminal, ajouter `--certificate-authorities=../path/certs/elasticsearch-ca.pem --insecure`
-- If (incoming-data) {
-
+```
+# Si elasticsearch reçoit des données alors votre agent est installé correctement
+If (incoming-data) {
   Agent_successfully installed
-
   } 
+```
 - Une fois ces configurations (Fleet & Agent) vous pouvez ajouter des intégrations
 

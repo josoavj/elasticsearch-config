@@ -198,7 +198,7 @@ if (installation == linux){
   elasticsearch.hosts: ["https://localhost:9200"]
   elasticsearch.username: "kibana_system"
   elasticsearch.password: "ur_passwd"
-  elasticsearh.ssl.certificateAuthorities: ["/etc/kibana/certs/http_ca.crt"]        # A copier venant de /etc/elasticsearch/certs
+  elasticsearch.ssl.certificateAuthorities: ["/etc/kibana/certs/http_ca.crt"]        # A copier venant de /etc/elasticsearch/certs
   server.publicBaseUrl: "http://kibana_ip:5601"                                     # Pour une utilisation standard
   ```
 

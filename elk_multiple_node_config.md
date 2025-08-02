@@ -318,7 +318,7 @@ if (installation == linux){
             * La version d'Elasticsearch installée.
             * Des notes sur la configuration ou des commandes spécifiques.
             * La date de la dernière modification.
-          * **`http.p12`**: Ce fichier est un **keystore PKCS\#12** qui contient à la fois le certificat SSL/TLS du nœud (souvent un certificat généré par votre CA pour la communication HTTP) et sa clé privée correspondante. Il est utilisé par Elasticsearch pour sécuriser les communications HTTP entrantes et sortantes de ce nœud.
+          * **`http.p12`**: Ce fichier est un **keystore PKCS#12** qui contient à la fois le certificat SSL/TLS du nœud (souvent un certificat généré par votre CA pour la communication HTTP) et sa clé privée correspondante. Il est utilisé par Elasticsearch pour sécuriser les communications HTTP entrantes et sortantes de ce nœud.
           * **`elasticsearch.yml`**: Le fichier de configuration principal pour ce nœud Elasticsearch spécifique. Ce fichier contiendra tous les paramètres de configuration propres à ce nœud, y compris :
             * `node.name`: Le nom unique du nœud (doit correspondre au nom du dossier).
             * `path.data` et `path.logs`: Les chemins vers les répertoires de données et de logs du nœud.

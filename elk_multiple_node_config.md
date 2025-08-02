@@ -6,7 +6,7 @@
   <img align="center" height=100 src="https://github.com/josoavj/ELK_Config/blob/master/assets/elastic-kibana-logo.png" alt="Kibana"/>
 </p>
 
-
+-----
 
 ## 1 - Présentation
 
@@ -46,6 +46,8 @@
 - Bien qu'il soit recommandé d'utiliser l'archive comme moyen d'installation sous Linux, si vous utilisez un Distro basé sur Debian; je recommande d'utiliser le pachage .deb
 - Vous pouvez le consulter dans le site officiel d'**[elastic](https://www.elastic.co/guide)**
 
+-----
+
 ## 2 - Installation globale pour elasticsearch - Kibana et Filebeat
 
 ### Utilisation de l'archive (.tar) comme moyen d'installation
@@ -75,6 +77,8 @@ if (installation == linux){
     - `export PATH=$PATH:$NOMPATH0`
   - Recommandé: au cas ou il y a au moins deux terminal, veuillez configurer les deux
   - Ensuite: `source .extension_nom_terminal`
+
+-----
 
 ## 3 - Installation et initialisation d'elasticsearch
 
@@ -167,6 +171,8 @@ if (installation == linux){
 - Changer vers elasticsearch: `su elasticsearch`
 - Executez les requêtes et commandes par cet utilisateur
 
+-----
+
 ## 4 - Pour kibana 
 
 - Installer kibana 
@@ -233,6 +239,8 @@ if (installation == linux){
 - Je suggère aussi d'activer par défaut le monitoring dans kibana pour mieux suivre les activités dans votre cluster
 - Vous pouvez l'activer facilement dans l'interface de Kibana
 
+-----
+
 ## 5 - Génerer un certificat pem pour votre cluster elasticsearch
 
 - Les certificats sont utiles pour une connexion sécurisée entre les instances et services
@@ -272,6 +280,8 @@ if (installation == linux){
   - `sudo chmod 660 file_name`
      -  Permet de changer la permission sur la lecture et écriture du document par l'utilisateur concerné
 
+-----
+
 ## 6 - Génerer un certificat pour securiser la connexion entre chaque node
 
 - Ensuite pour un certificat pour chaque node: `elasticsearch-certutil http`
@@ -294,12 +304,31 @@ if (installation == linux){
          - Dans kibana se trouve le fichier elasticsearch-ca.pem qui vas être utilisé pour la configuration vers kibana
          - Configuration de kibana [kibana.yml]: elasticsearch.ssl.certificateAuthorities: KBN_PATH_CONF/certs/elasticsearch-ca.pem
          - Structure basique pour chaque dossier dans elasticsearch en fonction des noms de vos nodes:
-           - node_name
-             - README.txt
-             - http.p12
-             - sample-elasticsearch.yml
+           ```
+           /elasticsearch/
+           ├── node_name/
+           │   ├── README.txt
+           │   ├── http.p12
+           │   └── elasticsearch.yml
+           └── Autres noeuds
+           ```
+           -----
+          * **`README.txt`**: Un fichier texte simple qui peut contenir des informations importantes spécifiques à ce nœud. Par exemple :
+            * Le rôle du nœud (maître, données, ingestion).
+            * La version d'Elasticsearch installée.
+            * Des notes sur la configuration ou des commandes spécifiques.
+            * La date de la dernière modification.
+          * **`http.p12`**: Ce fichier est un **keystore PKCS\#12** qui contient à la fois le certificat SSL/TLS du nœud (souvent un certificat généré par votre CA pour la communication HTTP) et sa clé privée correspondante. Il est utilisé par Elasticsearch pour sécuriser les communications HTTP entrantes et sortantes de ce nœud.
+          * **`elasticsearch.yml`**: Le fichier de configuration principal pour ce nœud Elasticsearch spécifique. Ce fichier contiendra tous les paramètres de configuration propres à ce nœud, y compris :
+            * `node.name`: Le nom unique du nœud (doit correspondre au nom du dossier).
+            * `path.data` et `path.logs`: Les chemins vers les répertoires de données et de logs du nœud.
+            * `network.host`: L'adresse IP ou le nom d'hôte sur lequel le nœud écoute.
+            * `cluster.name`: Le nom de votre cluster Elasticsearch.
+          * Les configurations de sécurité (`xpack.security.http.ssl.*`) qui pointeront vers votre fichier `http.p12`.
          - Copier http.p12 dans certs/
          - Run :  `elasticsearch-keystore add xpack.security.http.ssl.keystore.secure_password`
+
+-----
 
 ## 7 - Securisation de la connexion de kibana avec le serveur
 
@@ -315,7 +344,7 @@ if (installation == linux){
   ```
 - Cela changera le protocole de votre serveur kibana en https
 
-
+-----
 
 ## 8 - Self monitoring avec Kibana (Activation)
 
@@ -334,7 +363,7 @@ if (installation == linux){
   - `monitoring.kibana.collection.enabled: true`
 - Vous pouvez voir dans Kibana que le self monitoring pour votre cluster est activé
 
-
+-----
 
 ## 9 - Activer le monitoring avec metricbeat
 
@@ -346,44 +375,116 @@ if (installation == linux){
 - En cas d'erreur: `metricbeat modules enable elasticsearch-xpack`
 - Remarque: Ajouter metricbeat dans le même serveur qu'elasticsearch
 
-## 10 - Configuration de fleet server
+-----
 
-- Protocole: `TCP 8220 > Agent (TCP 8820 To the Agent)`
-- Déploiement en local pas dans le cloud (On premises)
-- On ajoute le serveur fleet et le serveur elasticsearch
-- Configuration valide pour la version 7.13 et plus
-- Prérequis:
-  - Avoir un CA (Certificat Authority)
-- Dans votre serveur Kibana: 
-  - Aller dans Menu > Fleet
-  - Aller dans Settings (Fleet)
-  - Ajouter vos serveurs elasticsearch (Host) {https://localhost:9200}
-  - Passer à : Add Fleet server
-  - Add Fleet server > Advanced > Production > Add fleet server Host (Port 8220) > Installing from a centralized host
-  - Ouvrir un terminal et executer: `elasticsearch-certutil cert --pem -ca /path/to/elastic-stack-ca.p12 -name fleet-server`
-  - On obtient les fichier suivant: `fleet-server.crt fleet-server.key`
-  - Copier ces fichiers dans le dossier pour fleet (../fleet/certs/)
-  - Veuiller utiliser la même CA que Kibana dans fleet (elasticsearch-ca.pem)
-  - Install Fleet 
-- Continue enrolling agent with fleet
+## 10 - Configuration de Fleet Server
 
-## 11 - Configuration d'un agent elastic (Elastic AGENT)
+Le **Fleet Server** est un composant crucial de l'architecture Elastic Agent. Il agit comme un point de coordination centralisé pour tous vos Elastic Agents, leur permettant de télécharger les stratégies, d'envoyer les données et de maintenir leur statut.
 
-- On ne peut pas installer un agent dans un firewall fortigate
-- Tous les agents doivent être connecté à l'hôte (Host)
-- Aller dans **Add agent**
-- Fonctionnement: 
-  - Chaque agent possède un Policy
-  - Chaque agent gère une integration
-- Enroll with fleet **enabled**
-- Utiliser linux tar pour ceci
-- Copier la commande donnée
-- Dans terminal, ajouter `--certificate-authorities=../path/certs/elasticsearch-ca.pem --insecure`
-```
-# Si elasticsearch reçoit des données alors votre agent est installé correctement
-If (incoming-data) {
-  Agent_successfully installed
-  } 
-```
-- Une fois ces configurations (Fleet & Agent) vous pouvez ajouter des intégrations
+Voici un guide détaillé pour configurer votre Fleet Server :
 
+  * **Protocole et Ports** :
+
+      * Le Fleet Server écoute les connexions des Agents Elastic sur le port **TCP 8220**.
+      * Les Agents Elastic se connectent au Fleet Server sur ce même port (ils *ne se connectent pas* sur le port 8820 ; c'est le port d'écoute du Fleet Server qui est pertinent).
+
+  * **Type de Déploiement** :
+
+      * Cette configuration se concentre sur un déploiement **On-premises** (sur vos propres serveurs), par opposition à un déploiement dans le cloud (Elastic Cloud).
+
+  * **Connexions Essentielles** :
+
+      * Pour fonctionner, le Fleet Server doit pouvoir communiquer avec votre serveur **Elasticsearch** (pour indexer les données et gérer les états des agents) et être accessible par les **Agents Elastic**.
+
+  * **Compatibilité des Versions** :
+
+      * Ces instructions sont valides pour les versions d'Elastic Stack **7.13 et ultérieures**, où Fleet Server a été introduit et est devenu le moyen principal de gérer les Agents Elastic.
+
+  * **Prérequis Indispensables** :
+
+      * **Autorité de Certification (CA)** : Il est **impératif** d'avoir une Autorité de Certification (CA) pour générer et signer les certificats SSL/TLS nécessaires à la communication sécurisée entre Fleet Server, Elasticsearch, Kibana et les Agents. Utiliser une CA commune pour tout l'écosystème Elastic Stack simplifie grandement la gestion des certificats et assure une communication chiffrée.
+
+  * **Étapes de Configuration dans Kibana** :
+
+    1.  **Accéder aux Paramètres Fleet** :
+
+          * Dans votre interface Kibana, naviguez vers le **Menu principal**.
+          * Recherchez et cliquez sur la section **Fleet**.
+          * Dans la section Fleet, allez dans les **Settings** (Paramètres).
+
+    2.  **Ajouter l'Hôte Elasticsearch** :
+
+          * Sous "Elasticsearch hosts", ajoutez l'URL de votre serveur Elasticsearch. Par exemple : `https://localhost:9200`. Si Elasticsearch est sur une autre machine, remplacez `localhost` par son adresse IP ou son nom d'hôte.
+
+    3.  **Ajouter un Fleet Server** :
+
+          * Cliquez sur **Add Fleet server**.
+          * Sélectionnez l'option "Advanced" ou "Production" (selon la version de Kibana, l'interface peut varier légèrement).
+          * Choisissez "Add fleet server Host" et spécifiez l'adresse de l'hôte sur lequel votre Fleet Server va s'exécuter, en incluant le port par défaut (8220). Exemple : `votre-serveur-fleet:8220`.
+          * Sélectionnez "Installing from a centralized host" ou l'option équivalente qui indique que vous allez installer Fleet Server manuellement sur une machine dédiée.
+
+    4.  **Génération des Certificats pour Fleet Server** :
+
+          * Depuis un terminal sur une machine ayant accès à votre CA et à `elasticsearch-certutil`, exécutez la commande suivante pour générer les certificats et la clé privée pour Fleet Server. Remplacez `/path/to/elastic-stack-ca.p12` par le chemin réel de votre fichier de CA :
+            ```bash
+            elasticsearch-certutil cert --pem -ca /path/to/elastic-stack-ca.p12 -name fleet-server
+            ```
+          * Cette commande produira deux fichiers essentiels : `fleet-server.crt` (le certificat public de Fleet Server) et `fleet-server.key` (la clé privée de Fleet Server).
+
+    5.  **Copie des Certificats** :
+
+          * Copiez ces deux fichiers (`fleet-server.crt` et `fleet-server.key`) dans le dossier désigné pour les certificats de Fleet Server sur la machine où il sera installé. Un emplacement courant est `../fleet/certs/` ou `[fleet-server-install-dir]/certs/`.
+          * Assurez-vous également que la **même CA** que celle utilisée par Kibana et Elasticsearch (`elasticsearch-ca.pem`) est disponible pour Fleet Server. Elle doit être copiée dans le répertoire des certificats de Fleet Server pour qu'il puisse valider les connexions des agents et à Elasticsearch.
+
+    6.  **Installation et Démarrage de Fleet Server** :
+
+          * Kibana vous fournira des instructions spécifiques (une commande `install` ou `setup`) pour installer et démarrer le processus Fleet Server sur votre machine désignée. Suivez attentivement ces instructions. Celles-ci incluront des références aux certificats que vous venez de générer.
+
+  * **Poursuivre l'Enrôlement des Agents** :
+
+      * Une fois que votre Fleet Server est configuré et en ligne (vous pouvez vérifier son statut dans Kibana sous "Fleet" \> "Fleet Servers"), vous pouvez continuer à **enrôler vos Agents Elastic**. Les agents utiliseront ce Fleet Server comme leur point de contact central.
+
+-----
+
+## 11 - Configuration d'un Agent Elastic
+
+Un **Agent Elastic** est un programme léger qui s'installe sur vos hôtes pour collecter des données et les envoyer à Elasticsearch. Il est géré de manière centralisée via **Fleet**, une interface dans Kibana.
+
+Voici quelques points clés à retenir et des étapes pour le configurer :
+
+  * **Où installer l'agent ?** Vous installez l'Agent Elastic sur les **hôtes** dont vous souhaitez collecter les données. Par exemple, sur des serveurs Linux, Windows, ou macOS.
+
+      * **Restriction importante** : Vous ne pouvez généralement pas installer un Agent Elastic directement sur un pare-feu matériel comme un FortiGate, car ces appareils ont des systèmes d'exploitation propriétaires et fermés. Pour collecter des logs d'un FortiGate, vous utiliseriez plutôt une intégration spécifique via Syslog ou SNMP, où les logs sont envoyés à un hôte sur lequel un Agent Elastic est installé.
+
+  * **Connexion de l'agent** : Tous les agents doivent être connectés à un **hôte** (un serveur ou une machine virtuelle) où ils peuvent s'exécuter. L'agent lui-même ne gère pas de connexions directes entre différents agents.
+
+  * **Processus d'ajout d'un agent** :
+
+    1.  Dans Kibana, naviguez vers la section **Fleet** (généralement sous "Management").
+    2.  Cliquez sur **Add agent**.
+
+  * **Fonctionnement de l'agent** :
+
+      * Chaque agent est associé à une **stratégie (Policy)**. Une stratégie définit quelles intégrations sont activées sur cet agent et comment elles doivent fonctionner (par exemple, quels logs collecter, quelles métriques surveiller).
+      * Chaque agent gère une ou plusieurs **intégrations**. Une intégration est un ensemble prédéfini de configurations pour collecter des données d'une source spécifique (par exemple, logs système, métriques de Docker, données de Nginx).
+
+  * **Enrôlement avec Fleet** : Assurez-vous que l'option **Enroll with Fleet** est **activée** lors de la configuration de l'agent. Cela permet à Fleet de gérer l'agent de manière centralisée.
+
+  * **Installation de l'agent (Exemple Linux Tarball)** :
+
+    1.  Choisissez la méthode d'installation appropriée pour votre système d'exploitation. Pour Linux, l'utilisation d'un **tarball** (archive .tar.gz) est une option courante.
+    2.  Kibana vous fournira une **commande spécifique** à copier et exécuter sur votre hôte. Cette commande inclut l'URL de Fleet et le jeton d'enrôlement.
+    3.  **Gestion des certificats (important \!) :** Si votre déploiement Elasticsearch utilise des certificats SSL/TLS personnalisés et que l'agent ne fait pas confiance à l'autorité de certification par défaut, vous devrez spécifier le chemin vers le certificat de l'autorité de certification Elasticsearch (CA). Ajoutez l'option `---certificate-authorities=/chemin/vers/votre/certs/elasticsearch-ca.pem` à la commande d'installation.
+    4.  Si vous rencontrez des problèmes de validation de certificat pendant le développement ou les tests (non recommandé pour la production), vous pouvez temporairement ajouter `--insecure` à la commande, mais **ce n'est pas une pratique sécurisée pour les environnements de production.**
+
+  * **Vérification de l'installation** :
+
+    ```
+    # Si Elasticsearch reçoit des données de votre agent,
+    # c'est le signe que l'agent est correctement installé
+    # et qu'il communique avec succès avec Fleet et Elasticsearch.
+    ```
+
+    Vous pouvez vérifier cela dans Kibana en allant dans "Fleet" et en regardant le statut de votre agent, ou en explorant les données entrantes dans "Discover".
+
+  * **Après la configuration** : Une fois que Fleet et l'agent sont configurés et que l'agent est en ligne, vous pouvez commencer à **ajouter des intégrations** à la stratégie de l'agent. Chaque intégration permettra à l'agent de collecter un type de données spécifique.

@@ -474,7 +474,7 @@ Voici quelques points clés à retenir et des étapes pour le configurer :
 
     1.  Choisissez la méthode d'installation appropriée pour votre système d'exploitation. Pour Linux, l'utilisation d'un **tarball** (archive .tar.gz) est une option courante.
     2.  Kibana vous fournira une **commande spécifique** à copier et exécuter sur votre hôte. Cette commande inclut l'URL de Fleet et le jeton d'enrôlement.
-    3.  **Gestion des certificats (important \!) :** Si votre déploiement Elasticsearch utilise des certificats SSL/TLS personnalisés et que l'agent ne fait pas confiance à l'autorité de certification par défaut, vous devrez spécifier le chemin vers le certificat de l'autorité de certification Elasticsearch (CA). Ajoutez l'option `---certificate-authorities=/chemin/vers/votre/certs/elasticsearch-ca.pem` à la commande d'installation.
+    3.  **Gestion des certificats (important !) :** Si votre déploiement Elasticsearch utilise des certificats SSL/TLS personnalisés et que l'agent ne fait pas confiance à l'autorité de certification par défaut, vous devrez spécifier le chemin vers le certificat de l'autorité de certification Elasticsearch (CA). Ajoutez l'option `---certificate-authorities=/chemin/vers/votre/certs/elasticsearch-ca.pem` à la commande d'installation.
     4.  Si vous rencontrez des problèmes de validation de certificat pendant le développement ou les tests (non recommandé pour la production), vous pouvez temporairement ajouter `--insecure` à la commande, mais **ce n'est pas une pratique sécurisée pour les environnements de production.**
 
   * **Vérification de l'installation** :
